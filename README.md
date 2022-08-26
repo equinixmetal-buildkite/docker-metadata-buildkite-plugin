@@ -1,10 +1,10 @@
 # docker-metadata
 
-In a similar fashion as [the GitHub action](https://github.com/docker/metadata-action), this plugin aims to help developers ensure a base and standard set of Docker tags and labels in containers.
+This Buildkite plugin applies a base set of tags and labels to Docker images, similar to the [GitHub CI Action](https://github.com/docker/metadata-action),
 
-Results will be stored a directory accessible through the `DOCKER_METADATA_DIR` environment variable.
+Results will be stored in a directory. The directory's path can be found in the `DOCKER_METADATA_DIR` environment variable.
 
-Labels will be accessible through the `DOCKER_METADATA_DIR/labels` directory, while tags will be accessible through the `DOCKER_METADATA_DIR/tags` directory. To parse them, it's a matter of iterating over the lines of the files.
+Labels will be accessible through the `DOCKER_METADATA_DIR/labels` directory, while tags will be accessible through the `DOCKER_METADATA_DIR/tags` directory. To parse them, iterate over each file's lines.
 
 ## Example
 
@@ -19,7 +19,7 @@ steps:
           - 'my-org/my-image'
 ```
 
-The default settings will create a tag with the commit SHA. e.g. `my-org/my-image:12345678`.
+The default settings will create a tag with the git commit SHA. (e.g. `my-org/my-image:12345678`).
 
 Also, the image will be labeled with the following labels:
 
@@ -35,7 +35,7 @@ The image or set of images to build.
 
 ### `extra_tags` (Optional, array)
 
-An extra set of tags to add to the image. e.g. `latest` or `dev`.
+An extra set of tags to add to the image. E.g. `latest` or `dev`.
 
 ### `title` (Optional, string)
 
