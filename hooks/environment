@@ -50,13 +50,13 @@ licenses="${BUILDKITE_PLUGIN_DOCKER_METADATA_LICENSES:-}"
 vendor="${BUILDKITE_PLUGIN_DOCKER_METADATA_VENDOR:-}"
 
 images=()
-# Parse tmpfs property.
 if plugin_read_list_into_result BUILDKITE_PLUGIN_DOCKER_METADATA_IMAGES ; then
   for arg in "${result[@]}" ; do
     images+=("${arg}")
   done
   unset result
 fi
+
 extra_tags=()
 if plugin_read_list_into_result BUILDKITE_PLUGIN_DOCKER_METADATA_EXTRA_TAGS ; then
   for arg in "${result[@]}" ; do
