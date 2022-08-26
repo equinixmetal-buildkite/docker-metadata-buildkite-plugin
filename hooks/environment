@@ -1,0 +1,139 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Creates tags and labels to use for a Docker image.
+# The output is stored in the $DOCKER_METADATA_DIR directory.
+# A `pre-exit` hook is provided to clean up the metadata (removes
+# the directory).
+
+# Helper functions
+##################
+
+# Reads a list from plugin config into a global result array
+# Returns success if values were read
+# Taken from https://github.com/buildkite-plugins/docker-buildkite-plugin/blob/master/hooks/command
+plugin_read_list_into_result() {
+  result=()
+
+  for prefix in "$@" ; do
+    local i=0
+    local parameter="${prefix}_${i}"
+
+    if [[ -n "${!prefix:-}" ]] ; then
+      echo "🚨 Plugin received a string for $prefix, expected an array" >&2
+      exit 1
+    fi
+
+    while [[ -n "${!parameter:-}" ]]; do
+      result+=("${!parameter}")
+      i=$((i+1))
+      parameter="${prefix}_${i}"
+    done
+  done
+
+  [[ ${#result[@]} -gt 0 ]] || return 1
+}
+
+debug_print() {
+  local debug="${BUILDKITE_PLUGIN_DOCKER_METADATA_DEBUG:-}"
+  if [[ "$debug" == "true" ]]; then
+    echo "$@"
+  fi
+}
+
+# Parameters
+############
+
+title="${BUILDKITE_PLUGIN_DOCKER_METADATA_TITLE:-}"
+licenses="${BUILDKITE_PLUGIN_DOCKER_METADATA_LICENSES:-}"
+vendor="${BUILDKITE_PLUGIN_DOCKER_METADATA_VENDOR:-}"
+
+images=()
+# Parse tmpfs property.
+if plugin_read_list_into_result BUILDKITE_PLUGIN_DOCKER_METADATA_IMAGES ; then
+  for arg in "${result[@]}" ; do
+    images+=("${arg}")
+  done
+  unset result
+fi
+extra_tags=()
+if plugin_read_list_into_result BUILDKITE_PLUGIN_DOCKER_METADATA_EXTRA_TAGS ; then
+  for arg in "${result[@]}" ; do
+    extra_tags+=("${arg}")
+  done
+  unset result
+fi
+
+# Temporary output definitions
+##############################
+
+docker_tags=()
+docker_labels=()
+
+# Metadata setting logic
+########################
+
+# TODO(jaosorior): Make these configurable through buildkite parameters
+docker_labels+=("org.opencontainers.image.source=$BUILDKITE_REPO")
+docker_labels+=("org.opencontainers.image.revision=$BUILDKITE_COMMIT")
+docker_labels+=("org.opencontainers.image.version=$BUILDKITE_COMMIT")
+
+# Uses different options for `date` depending on the OS
+docker_labels+=("org.opencontainers.image.created=$(date --iso-8601=seconds 2> /dev/null || date -I'seconds')")
+
+if [ -n "$title" ]; then
+    docker_labels+=("org.opencontainers.image.title=$title")
+fi
+
+if [ -n "$licenses" ]; then
+    docker_labels+=("org.opencontainers.image.licenses=$licenses")
+fi
+
+if [ -n "$vendor" ]; then
+    docker_labels+=("org.opencontainers.image.vendor=$vendor")
+fi
+
+# TODO(jaosorior): Figure out what label to use to populate team information
+
+# TODO(jaosorior): Figure out what label to use to populate team information
+#
+# set_teams=$BUILDKITE_PLUGIN_DOCKER_METADATA_SET_TEAMS
+# if [[ "${set_teams}" == "true" ]]; then
+#   docker_labels+=("org.opencontainers.image.teams=$BUIDLKITE_BUILD_CREATOR_TEAMS")
+# fi
+
+for image in "${images[@]}" ; do
+  # Set revision
+  docker_tags+=("${image}:${BUILDKITE_COMMIT}")
+  for tag in "${extra_tags[@]}" ; do
+    docker_tags+=("${image}:${tag}")
+  done
+done
+
+# Output
+########
+
+export DOCKER_METADATA_DIR=$(mktemp -d)
+debug_print "🚨 Plugin metadata will be stored in DOCKER_METADATA_DIR"
+debug_print "🚨 DOCKER_METADATA_DIR: '$DOCKER_METADATA_DIR'"
+
+if [ ${#docker_labels[@]} -gt 0 ]; then
+    touch "${DOCKER_METADATA_DIR}/labels"
+    debug_print "-- :docker-metadata: Persisting labels"
+    for label in "${docker_labels[@]}"; do
+        debug_print "- ${label}"
+        echo "$label" >> "${DOCKER_METADATA_DIR}/labels"
+    done
+    debug_print "-- :docker-metadata: Labels available in ${DOCKER_METADATA_DIR}/labels"
+fi
+
+if [ ${#docker_tags[@]} -gt 0 ]; then
+    touch "${DOCKER_METADATA_DIR}/tags"
+    debug_print "-- :docker-metadata: Persisting tags"
+    for tag in "${docker_tags[@]}"; do
+        debug_print "- ${tag}"
+        echo "$tag" >> "${DOCKER_METADATA_DIR}/tags"
+    done
+    debug_print "-- :docker-metadata: Tags available in ${DOCKER_METADATA_DIR}/tags"
+fi
