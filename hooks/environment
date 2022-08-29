@@ -126,6 +126,8 @@ if [ ${#docker_labels[@]} -gt 0 ]; then
         echo "$label" >> "${DOCKER_METADATA_DIR}/labels"
     done
     debug_print "-- :docker-metadata: Labels available in ${DOCKER_METADATA_DIR}/labels"
+else
+  debug_print "-- :docker-metadata: No labels detected"
 fi
 
 if [ ${#docker_tags[@]} -gt 0 ]; then
@@ -136,4 +138,6 @@ if [ ${#docker_tags[@]} -gt 0 ]; then
         echo "$tag" >> "${DOCKER_METADATA_DIR}/tags"
     done
     debug_print "-- :docker-metadata: Tags available in ${DOCKER_METADATA_DIR}/tags"
+else
+  debug_print "-- :docker-metadata: No tags detected"
 fi
