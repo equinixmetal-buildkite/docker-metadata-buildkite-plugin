@@ -65,6 +65,15 @@ if plugin_read_list_into_result BUILDKITE_PLUGIN_DOCKER_METADATA_EXTRA_TAGS ; th
   unset result
 fi
 
+
+# Input validation
+##################
+
+if [ "${#images[@]}" -eq 0 ]; then
+  echo "🚨 :docker-metadata: specifying an output image is required."
+  exit 1
+fi
+
 # Temporary output definitions
 ##############################
 

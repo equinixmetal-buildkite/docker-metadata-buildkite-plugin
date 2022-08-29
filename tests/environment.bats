@@ -255,3 +255,13 @@ export BUILDKITE_PLUGIN_DOCKER_METADATA_DEBUG=true
   # Cleanup
   rm -r "$dir"
 }
+
+@test "fails if an image is missing" {
+
+  # We can't use bats' `run` function because it executes in a subshell
+  # and we'll loose the environment variables.
+  run "$PWD/hooks/environment"
+
+  assert_failure
+  assert_output --partial "specifying an output image is required."
+}
