@@ -14,7 +14,7 @@ Add the following to your `pipeline.yml`:
 steps:
   - command: ls
     plugins:
-      - equinixmetal-buildkite/docker-metadata#v0.1.0:
+      - equinixmetal-buildkite/docker-metadata#v0.1.2:
           images:
           - 'my-org/my-image'
 ```
