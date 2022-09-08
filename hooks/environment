@@ -65,6 +65,7 @@ if plugin_read_list_into_result BUILDKITE_PLUGIN_DOCKER_METADATA_EXTRA_TAGS ; th
   unset result
 fi
 
+git_tag="${BUILDKITE_TAG:-}"
 
 # Input validation
 ##################
@@ -86,7 +87,11 @@ docker_labels=()
 # TODO(jaosorior): Make these configurable through buildkite parameters
 docker_labels+=("org.opencontainers.image.source=$BUILDKITE_REPO")
 docker_labels+=("org.opencontainers.image.revision=$BUILDKITE_COMMIT")
-docker_labels+=("org.opencontainers.image.version=$BUILDKITE_COMMIT")
+if [ -n "$git_tag" ]; then
+  docker_labels+=("org.opencontainers.image.version=$git_tag")
+else
+  docker_labels+=("org.opencontainers.image.version=$BUILDKITE_COMMIT")
+fi
 
 # Uses different options for `date` depending on the OS
 docker_labels+=("org.opencontainers.image.created=$(date --iso-8601=seconds 2> /dev/null || date -I'seconds')")
@@ -104,8 +109,6 @@ if [ -n "$vendor" ]; then
 fi
 
 # TODO(jaosorior): Figure out what label to use to populate team information
-
-# TODO(jaosorior): Figure out what label to use to populate team information
 #
 # set_teams=$BUILDKITE_PLUGIN_DOCKER_METADATA_SET_TEAMS
 # if [[ "${set_teams}" == "true" ]]; then
@@ -115,6 +118,12 @@ fi
 for image in "${images[@]}" ; do
   # Set revision
   docker_tags+=("${image}:${BUILDKITE_COMMIT}")
+
+  # Label for the version/tag
+  if [ -n "$git_tag" ]; then
+    docker_tags+=("${image}:${git_tag}")
+  fi
+
   for tag in "${extra_tags[@]}" ; do
     docker_tags+=("${image}:${tag}")
   done
