@@ -34,6 +34,7 @@ export BUILDKITE_PLUGIN_DOCKER_METADATA_DEBUG=true
   refute grep -E "^org.opencontainers.image.title=.*$" "$dir/labels"
   refute grep -E "^org.opencontainers.image.licenses=.*$" "$dir/labels"
   refute grep -E "^org.opencontainers.image.vendor=.*$" "$dir/labels"
+  refute grep -E "^org.opencontainers.image.authors=.*$" "$dir/labels"
 
   # When no buildkite tag (or git tag) is available, the version is the commit.
   assert grep -E "^org.opencontainers.image.version=$BUILDKITE_COMMIT$" "$dir/labels"
@@ -73,6 +74,7 @@ export BUILDKITE_PLUGIN_DOCKER_METADATA_DEBUG=true
   refute grep -E "^org.opencontainers.image.title=.*$" "$dir/labels"
   refute grep -E "^org.opencontainers.image.licenses=.*$" "$dir/labels"
   refute grep -E "^org.opencontainers.image.vendor=.*$" "$dir/labels"
+  refute grep -E "^org.opencontainers.image.authors=.*$" "$dir/labels"
 
   # Cleanup
   rm -r "$dir"
@@ -104,6 +106,7 @@ export BUILDKITE_PLUGIN_DOCKER_METADATA_DEBUG=true
   assert grep -E "^org.opencontainers.image.title=$BUILDKITE_PLUGIN_DOCKER_METADATA_TITLE" "$dir/labels"
   refute grep -E "^org.opencontainers.image.licenses=.*$" "$dir/labels"
   refute grep -E "^org.opencontainers.image.vendor=.*$" "$dir/labels"
+  refute grep -E "^org.opencontainers.image.authors=.*$" "$dir/labels"
 
   # Cleanup
   rm -r "$dir"
@@ -135,6 +138,7 @@ export BUILDKITE_PLUGIN_DOCKER_METADATA_DEBUG=true
   refute grep -E "^org.opencontainers.image.title=.*$" "$dir/labels"
   assert grep -E "^org.opencontainers.image.licenses=$BUILDKITE_PLUGIN_DOCKER_METADATA_LICENSES$" "$dir/labels"
   refute grep -E "^org.opencontainers.image.vendor=.*$" "$dir/labels"
+  refute grep -E "^org.opencontainers.image.authors=.*$" "$dir/labels"
 
   # Cleanup
   rm -r "$dir"
@@ -166,6 +170,39 @@ export BUILDKITE_PLUGIN_DOCKER_METADATA_DEBUG=true
   refute grep -E "^org.opencontainers.image.title=.*$" "$dir/labels"
   refute grep -E "^org.opencontainers.image.licenses=.*$" "$dir/labels"
   assert grep -E "^org.opencontainers.image.vendor=$BUILDKITE_PLUGIN_DOCKER_METADATA_VENDOR$" "$dir/labels"
+  refute grep -E "^org.opencontainers.image.authors=.*$" "$dir/labels"
+
+  # Cleanup
+  rm -r "$dir"
+}
+
+@test "Creates image with authors label (based on teams)" {
+  export BUILDKITE_PLUGIN_DOCKER_METADATA_IMAGES_0="foo/bar"
+  export BUILDKITE_BUILD_CREATOR_TEAMS="security-eng:foo:equinix-metal"
+
+  # We can't use bats' `run` function because it executes in a subshell
+  # and we'll loose the environment variables.
+  run "$PWD/hooks/environment"
+
+  assert_success
+  assert_output --regexp "DOCKER_METADATA_DIR: '.*'"
+  local dir=$(echo "$output" | sed -n "s/.*DOCKER_METADATA_DIR: '\(.*\)'/\1/p")
+  assert [ -n "$dir" ]
+  assert [ -d "$dir" ]
+  assert [ -f "$dir/labels" ]
+  assert [ -f "$dir/tags" ]
+
+  # Check tags
+  assert grep -E "^foo/bar:$BUILDKITE_COMMIT$" "$dir/tags"
+
+  # Check labels
+  assert grep -E "^org.opencontainers.image.source=$BUILDKITE_REPO$" "$dir/labels"
+  assert grep -E "^org.opencontainers.image.revision=$BUILDKITE_COMMIT$" "$dir/labels"
+  assert grep -E "^org.opencontainers.image.created=.*$" "$dir/labels"
+  refute grep -E "^org.opencontainers.image.title=.*$" "$dir/labels"
+  refute grep -E "^org.opencontainers.image.licenses=.*$" "$dir/labels"
+  refute grep -E "^org.opencontainers.image.vendor=.*$" "$dir/labels"
+  assert grep -E "^org.opencontainers.image.authors=$BUILDKITE_BUILD_CREATOR_TEAMS$" "$dir/labels"
 
   # Cleanup
   rm -r "$dir"

@@ -48,6 +48,7 @@ debug_print() {
 title="${BUILDKITE_PLUGIN_DOCKER_METADATA_TITLE:-}"
 licenses="${BUILDKITE_PLUGIN_DOCKER_METADATA_LICENSES:-}"
 vendor="${BUILDKITE_PLUGIN_DOCKER_METADATA_VENDOR:-}"
+teams="${BUILDKITE_BUILD_CREATOR_TEAMS:-}"
 
 images=()
 if plugin_read_list_into_result BUILDKITE_PLUGIN_DOCKER_METADATA_IMAGES ; then
@@ -108,12 +109,9 @@ if [ -n "$vendor" ]; then
     docker_labels+=("org.opencontainers.image.vendor=$vendor")
 fi
 
-# TODO(jaosorior): Figure out what label to use to populate team information
-#
-# set_teams=$BUILDKITE_PLUGIN_DOCKER_METADATA_SET_TEAMS
-# if [[ "${set_teams}" == "true" ]]; then
-#   docker_labels+=("org.opencontainers.image.teams=$BUIDLKITE_BUILD_CREATOR_TEAMS")
-# fi
+if [ -n "$teams" ]; then
+   docker_labels+=("org.opencontainers.image.authors=$teams")
+fi
 
 for image in "${images[@]}" ; do
   # Set revision
