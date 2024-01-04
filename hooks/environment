@@ -68,6 +68,8 @@ fi
 
 git_tag="${BUILDKITE_TAG:-}"
 
+tag_prefix="${BUILDKITE_PLUGIN_DOCKER_METADATA_TAG_PREFIX:-}"
+
 # Input validation
 ##################
 
@@ -115,15 +117,15 @@ fi
 
 for image in "${images[@]}" ; do
   # Set revision
-  docker_tags+=("${image}:${BUILDKITE_COMMIT}")
+  docker_tags+=("${image}:${tag_prefix}${BUILDKITE_COMMIT}")
 
   # Label for the version/tag
   if [ -n "$git_tag" ]; then
-    docker_tags+=("${image}:${git_tag}")
+    docker_tags+=("${image}:${tag_prefix}${git_tag}")
   fi
 
   for tag in "${extra_tags[@]}" ; do
-    docker_tags+=("${image}:${tag}")
+    docker_tags+=("${image}:${tag_prefix}${tag}")
   done
 done
 
