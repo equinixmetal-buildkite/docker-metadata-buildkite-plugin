@@ -24,6 +24,9 @@ configuration:
     debug:
       type: boolean
       description: Enable debug logging (or not).
+    tag_prefix:
+      type: string
+      description: Prefix to prepend to all tags.
   required:
     - images
   additionalProperties: false

@@ -37,6 +37,10 @@ The image or set of images to build.
 
 An extra set of tags to add to the image. E.g. `latest` or `dev`.
 
+### `tag_prefix` (Optional, string)
+
+Prefix all tags with provided string
+
 ### `title` (Optional, string)
 
 The title of the image. This will be persisted as the `org.opencontainers.image.title` label.
